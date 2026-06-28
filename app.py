@@ -91,15 +91,6 @@ st.markdown("""
 .block-container .stMarkdown p,
 .block-container .stCaption { color: white !important; }
 
-/* Input fields: dark text on light background for readability */
-.stTextArea textarea,
-.stTextInput input {
-    color: #111 !important;
-    background: rgba(255, 255, 255, 0.88) !important;
-}
-.stTextArea textarea::placeholder,
-.stTextInput input::placeholder { color: #888 !important; }
-
 /* Secondary / save buttons: dark text */
 .stButton > button:not([kind="primary"]) {
     color: #111 !important;
@@ -135,22 +126,22 @@ h1 {
     padding: 1rem !important;
 }
 
-/* Inputs */
+/* Inputs — light background, dark text for readability */
 .stTextArea textarea,
 .stTextInput input {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
     border-radius: 12px !important;
-    color: white !important;
+    color: #111 !important;
     font-size: 0.92rem !important;
     transition: border-color 0.2s, box-shadow 0.2s !important;
 }
 .stTextArea textarea::placeholder,
-.stTextInput input::placeholder { color: rgba(255,255,255,0.4) !important; }
+.stTextInput input::placeholder { color: #999 !important; }
 .stTextArea textarea:focus,
 .stTextInput input:focus {
-    border-color: rgba(255,255,255,0.5) !important;
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.1) !important;
+    border-color: rgba(255,255,255,0.7) !important;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.2) !important;
 }
 
 /* Primary button */
