@@ -284,6 +284,31 @@ def looks_like_recipe(caption: str) -> bool:
     return any(kw in caption.lower() for kw in keywords)
 
 
+COOKING_ACCOUNTS = [
+    "tasty", "bonappetitmag", "food52", "delish",
+    "seriouseats", "thekitchn", "jamieoliver", "ottolenghi",
+    "nigella.lawson", "halfbakedharvest", "minimalistbaker", "budgetbytes",
+]
+
+def get_random_recipe_url() -> str:
+    """Pick a random recent post from a random cooking account."""
+    account = random.choice(COOKING_ACCOUNTS)
+    L = instaloader.Instaloader(
+        quiet=True, download_pictures=False, download_videos=False,
+        download_video_thumbnails=False, save_metadata=False,
+    )
+    profile = instaloader.Profile.from_username(L.context, account)
+    posts = []
+    for post in profile.get_posts():
+        posts.append(post)
+        if len(posts) >= 15:
+            break
+    if not posts:
+        raise ValueError(f"No posts found for @{account}")
+    post = random.choice(posts)
+    return f"https://www.instagram.com/p/{post.shortcode}/"
+
+
 def extract_ingredients_with_claude(captions: list[str], api_key: str, basics: list[str]) -> str:
     client = anthropic.Anthropic(api_key=api_key)
     numbered = "\n\n---\n\n".join(
@@ -316,12 +341,26 @@ Recipes:
 
 # ── Main UI ────────────────────────────────────────────────────────────────────
 
-# Suggest from history
+# Suggest buttons
+col1, col2 = st.columns([1, 1])
+
 history = load_history()
-if history and st.button("🎲 Suggest random videos from history"):
-    pick = random.sample(history, min(3, len(history)))
-    st.session_state["urls_input"] = "\n".join(pick)
-    st.rerun()
+with col1:
+    if history and st.button("🕘 Suggest from history", use_container_width=True):
+        pick = random.sample(history, min(3, len(history)))
+        st.session_state["urls_input"] = "\n".join(pick)
+        st.rerun()
+
+with col2:
+    if st.button("🍝 Find me a random recipe", use_container_width=True):
+        with st.spinner("Browsing Instagram for a recipe…"):
+            try:
+                url = get_random_recipe_url()
+                current = st.session_state.get("urls_input", "").strip()
+                st.session_state["urls_input"] = (current + "\n" + url).strip()
+                st.rerun()
+            except Exception as e:
+                st.warning(f"Couldn't fetch a recipe right now: {e}")
 
 if "urls_input" not in st.session_state:
     st.session_state["urls_input"] = ""
