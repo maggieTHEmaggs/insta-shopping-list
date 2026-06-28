@@ -108,14 +108,33 @@ st.markdown("""
 .block-container .stMarkdown p,
 .block-container .stCaption { color: white !important; }
 
-/* Secondary / save buttons: dark text */
-.stButton > button:not([kind="primary"]) {
+/* Secondary / save buttons: dark text, always */
+.stButton > button:not([kind="primary"]),
+.stButton > button:not([kind="primary"]):hover,
+.stButton > button:not([kind="primary"]):focus,
+.stButton > button:not([kind="primary"]):active {
     color: #111 !important;
-    background: rgba(255, 255, 255, 0.85) !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
     border-radius: 12px !important;
     font-weight: 600 !important;
 }
+
+/* Expander header text: always white */
+.streamlit-expanderHeader p,
+.streamlit-expanderHeader span { color: white !important; }
+
+/* Expander content: dark text on lighter background */
+.streamlit-expanderContent,
+.streamlit-expanderContent p,
+.streamlit-expanderContent span,
+.streamlit-expanderContent label { color: #111 !important; }
+
+/* Selectbox / dropdown options */
+[data-baseweb="select"] *,
+[data-baseweb="popover"] *,
+[data-baseweb="menu"] * { color: #111 !important; }
+[data-baseweb="option"]:hover { background: #f0f0f0 !important; }
 
 /* Title */
 h1 {
