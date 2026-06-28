@@ -1,8 +1,34 @@
 import re
+from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 import instaloader
 import anthropic
+
+# ── Household basics (persistent) ─────────────────────────────────────────────
+BASICS_FILE = Path(__file__).parent / "basics.txt"
+
+DEFAULT_BASICS = """water
+salt
+pepper
+olive oil
+vegetable stock
+chicken stock
+garlic powder
+onion powder
+paprika
+cumin
+oregano
+sugar
+flour"""
+
+def load_basics() -> str:
+    if BASICS_FILE.exists():
+        return BASICS_FILE.read_text(encoding="utf-8").strip()
+    return DEFAULT_BASICS
+
+def save_basics(text: str) -> None:
+    BASICS_FILE.write_text(text.strip(), encoding="utf-8")
 
 # ── Italian food backgrounds (Unsplash) ────────────────────────────────────────
 ITALIAN_IMAGES = [
@@ -192,6 +218,20 @@ with st.expander("⚙️ Setup — Claude API Key", expanded=False):
     else:
         st.caption("✅ API key set.")
 
+# ── Household basics editor ────────────────────────────────────────────────────
+with st.expander("🚫 Household Basics — never add to shopping list", expanded=False):
+    basics_text = st.text_area(
+        "One item per line — these will never appear in your shopping list",
+        value=load_basics(),
+        height=220,
+        key="basics_editor",
+    )
+    if st.button("💾 Save basics list"):
+        save_basics(basics_text)
+        st.success("Saved!")
+
+basics_list = [line.strip().lower() for line in basics_text.splitlines() if line.strip()]
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def extract_shortcode(url: str) -> str:
@@ -220,20 +260,24 @@ def looks_like_recipe(caption: str) -> bool:
     return any(kw in caption.lower() for kw in keywords)
 
 
-def extract_ingredients_with_claude(captions: list[str], api_key: str) -> str:
+def extract_ingredients_with_claude(captions: list[str], api_key: str, basics: list[str]) -> str:
     client = anthropic.Anthropic(api_key=api_key)
     numbered = "\n\n---\n\n".join(
         f"Recipe {i + 1}:\n{caption}" for i, caption in enumerate(captions)
     )
+    basics_block = "\n".join(f"- {item}" for item in basics) if basics else "(none)"
     prompt = f"""You are a helpful assistant that extracts grocery ingredients from recipe text.
 
 Given the recipes below, produce a single consolidated shopping list:
 - Extract only ingredients (not equipment, steps, or garnishes)
-- Skip everyday household staples: water, stock, salt, pepper, and herb/spice powders (e.g. garlic powder, onion powder, paprika)
+- NEVER include any item from the household basics list below — not even partial matches
 - Merge duplicates — if multiple recipes need the same item, list it once
 - List the ingredient name only — no amounts, quantities, or units
 - Translate everything to English — the recipes may be in any language
 - Output ONLY a plain bullet list (• item), no headings, no preamble
+
+Household basics to always exclude:
+{basics_block}
 
 Recipes:
 {numbered}"""
@@ -292,7 +336,7 @@ if generate:
 
     with st.spinner("Extracting ingredients with Claude…"):
         try:
-            shopping_list = extract_ingredients_with_claude(captions, api_key)
+            shopping_list = extract_ingredients_with_claude(captions, api_key, basics_list)
         except anthropic.AuthenticationError:
             st.error("Invalid Claude API key. Check the Setup section above.")
             st.stop()
