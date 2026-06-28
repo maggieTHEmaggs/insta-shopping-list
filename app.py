@@ -1,10 +1,157 @@
 import re
 import streamlit as st
+import streamlit.components.v1 as components
 import instaloader
 import anthropic
 
+# ── Italian food backgrounds (Unsplash) ────────────────────────────────────────
+ITALIAN_IMAGES = [
+    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1920&q=80",  # pizza
+    "https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?auto=format&fit=crop&w=1920&q=80",  # pasta
+    "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=1920&q=80",  # lasagna
+    "https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=1920&q=80",  # risotto
+    "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=1920&q=80",  # tiramisu
+    "https://images.unsplash.com/photo-1595295333158-4742f28fbd85?auto=format&fit=crop&w=1920&q=80",  # pizza margherita
+    "https://images.unsplash.com/photo-1551183053-bf91798d82fc?auto=format&fit=crop&w=1920&q=80",  # spaghetti
+]
+
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Insta Shopping List", page_icon="🛒", layout="centered")
+
+# ── CSS ────────────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+/* Hide default Streamlit chrome */
+#MainMenu, footer { visibility: hidden; }
+
+/* App background */
+.stApp {
+    background-size: cover !important;
+    background-position: center center !important;
+    background-attachment: fixed !important;
+}
+
+/* Dark overlay behind everything */
+.stApp::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Main content card */
+.block-container {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-radius: 20px !important;
+    padding: 2.5rem 3rem !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35) !important;
+    margin-top: 2.5rem !important;
+    margin-bottom: 2.5rem !important;
+    max-width: 760px !important;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+}
+
+/* Title */
+h1 {
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+    color: #111 !important;
+}
+
+/* Subheader */
+h3 {
+    color: #222 !important;
+    font-weight: 700 !important;
+}
+
+/* Primary button */
+.stButton > button[kind="primary"] {
+    background: #e63946 !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    padding: 0.6rem 2rem !important;
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease !important;
+    color: white !important;
+}
+.stButton > button[kind="primary"]:hover:not(:disabled) {
+    background: #c1121f !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(230, 57, 70, 0.45) !important;
+}
+.stButton > button[kind="primary"]:disabled {
+    opacity: 0.45 !important;
+}
+
+/* Text area */
+.stTextArea textarea {
+    border-radius: 10px !important;
+    border: 2px solid #e0e0e0 !important;
+    font-size: 0.9rem !important;
+    transition: border-color 0.2s ease !important;
+}
+.stTextArea textarea:focus {
+    border-color: #e63946 !important;
+    box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.12) !important;
+}
+
+/* Download button */
+.stDownloadButton > button {
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+}
+
+/* Responsive: shrink padding on small screens */
+@media (max-width: 640px) {
+    .block-container {
+        padding: 1.5rem 1.2rem !important;
+        margin-top: 1rem !important;
+        border-radius: 14px !important;
+    }
+    h1 { font-size: 1.6rem !important; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ── Rotating background (JS via iframe → parent document) ──────────────────────
+images_json = str(ITALIAN_IMAGES).replace("'", '"')
+components.html(f"""
+<script>
+(function() {{
+    const images = {images_json};
+    let idx = Math.floor(Math.random() * images.length);
+
+    function applyBg() {{
+        const app = window.parent.document.querySelector('.stApp');
+        if (app) {{
+            app.style.backgroundImage = 'url(' + images[idx] + ')';
+        }}
+        idx = (idx + 1) % images.length;
+    }}
+
+    applyBg();
+    setInterval(applyBg, 30000);
+}})();
+</script>
+""", height=0)
+
+# ── Title ──────────────────────────────────────────────────────────────────────
 st.title("🛒 Insta Shopping List")
 st.caption("Paste Instagram cooking video URLs and get a combined grocery list.")
 
@@ -23,7 +170,6 @@ with st.sidebar:
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def extract_shortcode(url: str) -> str:
-    """Pull the post shortcode out of an Instagram URL."""
     match = re.search(r"/(?:p|reel|tv)/([A-Za-z0-9_-]+)", url)
     if not match:
         raise ValueError(f"Couldn't parse URL: {url}")
@@ -31,31 +177,29 @@ def extract_shortcode(url: str) -> str:
 
 
 def fetch_caption(shortcode: str) -> str:
-    """Fetch the caption of a public Instagram post."""
-    L = instaloader.Instaloader(quiet=True, download_pictures=False,
-                                download_videos=False, download_video_thumbnails=False,
-                                save_metadata=False)
+    L = instaloader.Instaloader(
+        quiet=True,
+        download_pictures=False,
+        download_videos=False,
+        download_video_thumbnails=False,
+        save_metadata=False,
+    )
     post = instaloader.Post.from_shortcode(L.context, shortcode)
     return post.caption or ""
 
 
 def looks_like_recipe(caption: str) -> bool:
-    """Rough check: does the caption contain ingredient-style content?"""
     keywords = ["cup", "tbsp", "tsp", "gram", "g ", "ml", "oz", "lb",
                 "ingredient", "salt", "pepper", "oil", "flour", "butter",
                 "egg", "garlic", "onion", "tomato", "chicken", "beef", "sugar"]
-    lower = caption.lower()
-    return any(kw in lower for kw in keywords)
+    return any(kw in caption.lower() for kw in keywords)
 
 
 def extract_ingredients_with_claude(captions: list[str], api_key: str) -> str:
-    """Send all captions to Claude and get back a unified shopping list."""
     client = anthropic.Anthropic(api_key=api_key)
-
     numbered = "\n\n---\n\n".join(
         f"Recipe {i + 1}:\n{caption}" for i, caption in enumerate(captions)
     )
-
     prompt = f"""You are a helpful assistant that extracts grocery ingredients from recipe text.
 
 Given the recipes below, produce a single consolidated shopping list:
@@ -85,13 +229,14 @@ urls_input = st.text_area(
     height=160,
 )
 
-generate = st.button("Generate Shopping List", type="primary",
-                     disabled=not (api_key and urls_input.strip()))
+generate = st.button(
+    "Generate Shopping List",
+    type="primary",
+    disabled=not (api_key and urls_input.strip()),
+)
 
 if generate:
     urls = [u.strip() for u in urls_input.splitlines() if u.strip()]
-
-    # ── Step 1: Fetch captions ─────────────────────────────────────────────────
     captions = []
     warnings = []
 
@@ -100,21 +245,18 @@ if generate:
             try:
                 shortcode = extract_shortcode(url)
                 caption = fetch_caption(shortcode)
-
                 if not caption:
                     warnings.append(f"⚠️ No caption found for: {url}")
                 elif not looks_like_recipe(caption):
                     warnings.append(f"⚠️ Caption may not contain ingredients: {url}")
-                    captions.append(caption)  # still try it
+                    captions.append(caption)
                 else:
                     captions.append(caption)
                     st.write(f"✅ {url}")
-
             except ValueError as e:
                 st.write(f"❌ Bad URL — {e}")
             except Exception as e:
                 st.write(f"❌ Couldn't fetch {url} — {e}")
-
         status.update(label="Done fetching!", state="complete")
 
     for w in warnings:
@@ -124,7 +266,6 @@ if generate:
         st.error("No usable captions found. Make sure the posts are public and contain recipe text.")
         st.stop()
 
-    # ── Step 2: Extract & merge ingredients ────────────────────────────────────
     with st.spinner("Extracting ingredients with Claude…"):
         try:
             shopping_list = extract_ingredients_with_claude(captions, api_key)
@@ -135,7 +276,6 @@ if generate:
             st.error(f"Claude API error: {e}")
             st.stop()
 
-    # ── Step 3: Show result ────────────────────────────────────────────────────
     st.divider()
     st.subheader("🛒 Your Shopping List")
     st.markdown(shopping_list)
