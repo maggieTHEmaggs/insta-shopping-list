@@ -1,4 +1,6 @@
 import re
+import json
+import random
 from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
@@ -29,6 +31,21 @@ def load_basics() -> str:
 
 def save_basics(text: str) -> None:
     BASICS_FILE.write_text(text.strip(), encoding="utf-8")
+
+# ── URL history (persistent) ───────────────────────────────────────────────────
+HISTORY_FILE = Path(__file__).parent / "history.json"
+
+def load_history() -> list[str]:
+    if HISTORY_FILE.exists():
+        return json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+    return []
+
+def save_to_history(urls: list[str]) -> None:
+    history = load_history()
+    for url in urls:
+        if url not in history:
+            history.append(url)
+    HISTORY_FILE.write_text(json.dumps(history), encoding="utf-8")
 
 # ── Italian food backgrounds (Unsplash) ────────────────────────────────────────
 ITALIAN_IMAGES = [
@@ -298,10 +315,22 @@ Recipes:
 
 
 # ── Main UI ────────────────────────────────────────────────────────────────────
+
+# Suggest from history
+history = load_history()
+if history and st.button("🎲 Suggest random videos from history"):
+    pick = random.sample(history, min(3, len(history)))
+    st.session_state["urls_input"] = "\n".join(pick)
+    st.rerun()
+
+if "urls_input" not in st.session_state:
+    st.session_state["urls_input"] = ""
+
 urls_input = st.text_area(
     "Instagram URLs (one per line)",
     placeholder="https://www.instagram.com/reel/ABC123/\nhttps://www.instagram.com/reel/DEF456/",
     height=160,
+    key="urls_input",
 )
 
 generate = st.button(
@@ -333,6 +362,8 @@ if generate:
             except Exception as e:
                 st.write(f"❌ Couldn't fetch {url} — {e}")
         status.update(label="Done fetching!", state="complete")
+
+    save_to_history([u for u in urls if u])
 
     for w in warnings:
         st.warning(w)
