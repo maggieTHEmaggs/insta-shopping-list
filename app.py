@@ -82,16 +82,32 @@ st.markdown("""
     max-width: 780px !important;
 }
 
-/* All text white */
+/* All text white — scoped to headings, labels, paragraphs */
 .block-container h1,
 .block-container h2,
 .block-container h3,
 .block-container p,
-.block-container span,
 .block-container label,
-.block-container div,
-.block-container .stMarkdown,
+.block-container .stMarkdown p,
 .block-container .stCaption { color: white !important; }
+
+/* Input fields: dark text on light background for readability */
+.stTextArea textarea,
+.stTextInput input {
+    color: #111 !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+}
+.stTextArea textarea::placeholder,
+.stTextInput input::placeholder { color: #888 !important; }
+
+/* Secondary / save buttons: dark text */
+.stButton > button:not([kind="primary"]) {
+    color: #111 !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+}
 
 /* Title */
 h1 {
