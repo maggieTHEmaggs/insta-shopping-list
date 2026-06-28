@@ -21,130 +21,154 @@ st.set_page_config(page_title="Insta Shopping List", page_icon="🛒", layout="c
 # ── CSS ────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-/* Hide default Streamlit chrome */
-#MainMenu, footer { visibility: hidden; }
+#MainMenu, footer, [data-testid="stSidebar"] { display: none !important; }
 
-/* App background */
+/* Background */
 .stApp {
     background-size: cover !important;
     background-position: center center !important;
     background-attachment: fixed !important;
 }
 
-/* Dark overlay behind everything */
+/* Dark overlay */
 .stApp::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(0, 0, 0, 0.55);
     z-index: 0;
     pointer-events: none;
 }
 
-/* Main content card */
+/* Glass card */
 .block-container {
     position: relative;
     z-index: 1;
-    background: rgba(255, 255, 255, 0.94) !important;
-    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 24px !important;
     padding: 2.5rem 3rem !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35) !important;
+    backdrop-filter: blur(28px) !important;
+    -webkit-backdrop-filter: blur(28px) !important;
+    box-shadow: 0 16px 56px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.15) !important;
     margin-top: 2.5rem !important;
     margin-bottom: 2.5rem !important;
-    max-width: 760px !important;
+    max-width: 780px !important;
 }
 
-/* Sidebar */
-[data-testid="stSidebar"] {
-    position: relative;
-    z-index: 1;
-    background: rgba(255, 255, 255, 0.96) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
-}
+/* All text white */
+.block-container h1,
+.block-container h2,
+.block-container h3,
+.block-container p,
+.block-container span,
+.block-container label,
+.block-container div,
+.block-container .stMarkdown,
+.block-container .stCaption { color: white !important; }
 
 /* Title */
 h1 {
     font-size: 2.2rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.5px !important;
-    color: #111 !important;
 }
 
-/* Subheader */
-h3 {
-    color: #222 !important;
-    font-weight: 700 !important;
+/* Expander (API key) */
+.streamlit-expanderHeader {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+.streamlit-expanderHeader:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+}
+.streamlit-expanderContent {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top: none !important;
+    border-radius: 0 0 12px 12px !important;
+    padding: 1rem !important;
+}
+
+/* Inputs */
+.stTextArea textarea,
+.stTextInput input {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 12px !important;
+    color: white !important;
+    font-size: 0.92rem !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+.stTextArea textarea::placeholder,
+.stTextInput input::placeholder { color: rgba(255,255,255,0.4) !important; }
+.stTextArea textarea:focus,
+.stTextInput input:focus {
+    border-color: rgba(255,255,255,0.5) !important;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.1) !important;
 }
 
 /* Primary button */
 .stButton > button[kind="primary"] {
     background: #e63946 !important;
     border: none !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     font-weight: 700 !important;
     font-size: 1rem !important;
-    padding: 0.6rem 2rem !important;
-    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease !important;
+    padding: 0.65rem 2.2rem !important;
     color: white !important;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s !important;
 }
 .stButton > button[kind="primary"]:hover:not(:disabled) {
     background: #c1121f !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 18px rgba(230, 57, 70, 0.45) !important;
+    box-shadow: 0 6px 20px rgba(230, 57, 70, 0.5) !important;
 }
-.stButton > button[kind="primary"]:disabled {
-    opacity: 0.45 !important;
-}
-
-/* Text area */
-.stTextArea textarea {
-    border-radius: 10px !important;
-    border: 2px solid #e0e0e0 !important;
-    font-size: 0.9rem !important;
-    transition: border-color 0.2s ease !important;
-}
-.stTextArea textarea:focus {
-    border-color: #e63946 !important;
-    box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.12) !important;
-}
+.stButton > button[kind="primary"]:disabled { opacity: 0.4 !important; }
 
 /* Download button */
 .stDownloadButton > button {
-    border-radius: 10px !important;
+    background: rgba(255,255,255,0.12) !important;
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    border-radius: 12px !important;
+    color: white !important;
     font-weight: 600 !important;
+    transition: background 0.2s !important;
+}
+.stDownloadButton > button:hover {
+    background: rgba(255,255,255,0.2) !important;
 }
 
-/* Responsive: shrink padding on small screens */
+/* Divider */
+hr { border-color: rgba(255,255,255,0.15) !important; }
+
+/* Responsive */
 @media (max-width: 640px) {
     .block-container {
         padding: 1.5rem 1.2rem !important;
         margin-top: 1rem !important;
-        border-radius: 14px !important;
+        border-radius: 16px !important;
     }
     h1 { font-size: 1.6rem !important; }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Rotating background (JS via iframe → parent document) ──────────────────────
+# ── Rotating background ────────────────────────────────────────────────────────
 images_json = str(ITALIAN_IMAGES).replace("'", '"')
 components.html(f"""
 <script>
 (function() {{
     const images = {images_json};
     let idx = Math.floor(Math.random() * images.length);
-
     function applyBg() {{
         const app = window.parent.document.querySelector('.stApp');
-        if (app) {{
-            app.style.backgroundImage = 'url(' + images[idx] + ')';
-        }}
+        if (app) app.style.backgroundImage = 'url(' + images[idx] + ')';
         idx = (idx + 1) % images.length;
     }}
-
     applyBg();
     setInterval(applyBg, 30000);
 }})();
@@ -155,9 +179,8 @@ components.html(f"""
 st.title("🛒 Insta Shopping List")
 st.caption("Paste Instagram cooking video URLs and get a combined grocery list.")
 
-# ── Sidebar: API key ───────────────────────────────────────────────────────────
-with st.sidebar:
-    st.header("Setup")
+# ── Collapsible API key ────────────────────────────────────────────────────────
+with st.expander("⚙️ Setup — Claude API Key", expanded=False):
     api_key = st.text_input(
         "Claude API Key",
         type="password",
@@ -165,7 +188,9 @@ with st.sidebar:
         help="Get a free key at console.anthropic.com",
     )
     if not api_key:
-        st.info("Enter your Claude API key to get started.")
+        st.caption("You need a Claude API key to generate the shopping list. [Get one here](https://console.anthropic.com)")
+    else:
+        st.caption("✅ API key set.")
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -222,7 +247,6 @@ Recipes:
 
 
 # ── Main UI ────────────────────────────────────────────────────────────────────
-
 urls_input = st.text_area(
     "Instagram URLs (one per line)",
     placeholder="https://www.instagram.com/reel/ABC123/\nhttps://www.instagram.com/reel/DEF456/",
@@ -232,7 +256,7 @@ urls_input = st.text_area(
 generate = st.button(
     "Generate Shopping List",
     type="primary",
-    disabled=not (api_key and urls_input.strip()),
+    disabled=not (api_key and urls_input.strip()) if 'api_key' in dir() else True,
 )
 
 if generate:
@@ -270,7 +294,7 @@ if generate:
         try:
             shopping_list = extract_ingredients_with_claude(captions, api_key)
         except anthropic.AuthenticationError:
-            st.error("Invalid Claude API key. Check it in the sidebar.")
+            st.error("Invalid Claude API key. Check the Setup section above.")
             st.stop()
         except Exception as e:
             st.error(f"Claude API error: {e}")
